@@ -5,7 +5,7 @@ interface AlertBannerProps {
   message: string;
 }
 
-function AlertBanner({ type, message }: AlertBannerProps): JSX.Element | null {
+function AlertBanner({ type, message }: AlertBannerProps): React.ReactElement | null {
   if (!message) {
     return null;
   }

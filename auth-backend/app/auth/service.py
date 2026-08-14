@@ -4,7 +4,6 @@ import hashlib
 import os
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 import bcrypt
 import jwt
@@ -62,7 +61,10 @@ def _hash_password(plain: str) -> str:
 
 
 def _verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(plain.encode(), hashed.encode())
+    try:
+        return bcrypt.checkpw(plain.encode(), hashed.encode())
+    except Exception:
+        return False
 
 
 def _sha256(value: str) -> str:
@@ -127,18 +129,18 @@ def _clear_refresh_cookie(response: Response) -> None:
     )
 
 
-def _get_user_by_email(email: str) -> Optional[dict]:
+def _get_user_by_email(email: str) -> dict | None:
     return _users.get(email.lower())
 
 
-def _get_user_by_id(user_id: str) -> Optional[dict]:
+def _get_user_by_id(user_id: str) -> dict | None:
     for user in _users.values():
         if user["id"] == user_id:
             return user
     return None
 
 
-def _find_valid_refresh_token(token_hash: str) -> Optional[dict]:
+def _find_valid_refresh_token(token_hash: str) -> dict | None:
     now = datetime.now(timezone.utc)
     for record in _refresh_tokens:
         if (
@@ -170,7 +172,9 @@ def _store_refresh_token(
     remember_me: bool = False,
 ) -> None:
     now = datetime.now(timezone.utc)
-    expire_days = REFRESH_TOKEN_REMEMBER_DAYS if remember_me else REFRESH_TOKEN_EXPIRE_DAYS
+    expire_days = (
+        REFRESH_TOKEN_REMEMBER_DAYS if remember_me else REFRESH_TOKEN_EXPIRE_DAYS
+    )
     _refresh_tokens.append(
         {
             "id": secrets.token_hex(16),
@@ -262,7 +266,7 @@ class AuthService:
 
         return RegisterResponse(
             id=user_id,
-            fullName=body.full_name,
+            full_name=body.full_name,
             email=email_lower,
         )
 
@@ -298,15 +302,15 @@ class AuthService:
         _set_refresh_cookie(response, raw_refresh, remember_me)
 
         return LoginResponse(
-            accessToken=access_token,
-            tokenType="bearer",
+            access_token=access_token,
+            token_type="bearer",
         )
 
     # ------------------------------------------------------------------
     # refresh  (FR-08)
     # ------------------------------------------------------------------
     async def refresh(self, request: Request, response: Response) -> RefreshResponse:
-        raw_token: Optional[str] = request.cookies.get(REFRESH_COOKIE_NAME)
+        raw_token: str | None = request.cookies.get(REFRESH_COOKIE_NAME)
 
         if not raw_token:
             raise HTTPException(
@@ -361,8 +365,8 @@ class AuthService:
         _set_refresh_cookie(response, new_raw_refresh, remember_me)
 
         return RefreshResponse(
-            accessToken=new_access_token,
-            tokenType="bearer",
+            access_token=new_access_token,
+            token_type="bearer",
         )
 
     # ------------------------------------------------------------------
@@ -392,7 +396,10 @@ class AuthService:
             # In production: send email with reset link containing raw_token
 
         return ForgotPasswordResponse(
-            message="If an account with that email exists, a password reset link has been sent."
+            message=(
+                "If an account with that email exists, a password reset link"
+                " has been sent."
+            )
         )
 
     # ------------------------------------------------------------------
@@ -417,7 +424,7 @@ class AuthService:
 
         token_hash = _sha256(body.token)
         now = datetime.now(timezone.utc)
-        record: Optional[dict] = None
+        record: dict | None = None
         for r in _password_resets:
             if (
                 r["token_hash"] == token_hash
@@ -486,10 +493,10 @@ class AuthService:
 
         return MeResponse(
             id=user["id"],
-            fullName=user["full_name"],
+            full_name=user["full_name"],
             email=user["email"],
-            isActive=user["is_active"],
-            createdAt=user["created_at"],
+            is_active=user["is_active"],
+            created_at=user["created_at"],
         )
 
     # ------------------------------------------------------------------
@@ -499,9 +506,9 @@ class AuthService:
         self,
         request: Request,
         response: Response,
-        token: Optional[str],
+        token: str | None,
     ) -> None:
-        raw_refresh: Optional[str] = request.cookies.get(REFRESH_COOKIE_NAME)
+        raw_refresh: str | None = request.cookies.get(REFRESH_COOKIE_NAME)
         if raw_refresh:
             token_hash = _sha256(raw_refresh)
             _revoke_refresh_token(token_hash)

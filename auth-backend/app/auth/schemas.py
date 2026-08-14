@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -21,8 +20,10 @@ class RegisterRequest(BaseModel):
 
 class RegisterResponse(BaseModel):
     id: str
-    fullName: str
+    full_name: str = Field(..., serialization_alias="fullName")
     email: str
+
+    model_config = {"populate_by_name": True}
 
 
 # ---------------------------------------------------------------------------
@@ -32,14 +33,16 @@ class RegisterResponse(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-    remember_me: Optional[bool] = Field(None, alias="rememberMe")
+    remember_me: bool | None = Field(None, alias="rememberMe")
 
     model_config = {"populate_by_name": True}
 
 
 class LoginResponse(BaseModel):
-    accessToken: str
-    tokenType: str
+    access_token: str = Field(..., serialization_alias="accessToken")
+    token_type: str = Field(..., serialization_alias="tokenType")
+
+    model_config = {"populate_by_name": True}
 
 
 # ---------------------------------------------------------------------------
@@ -47,8 +50,10 @@ class LoginResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 class RefreshResponse(BaseModel):
-    accessToken: str
-    tokenType: str
+    access_token: str = Field(..., serialization_alias="accessToken")
+    token_type: str = Field(..., serialization_alias="tokenType")
+
+    model_config = {"populate_by_name": True}
 
 
 # ---------------------------------------------------------------------------
@@ -85,7 +90,9 @@ class ResetPasswordResponse(BaseModel):
 
 class MeResponse(BaseModel):
     id: str
-    fullName: str
+    full_name: str = Field(..., serialization_alias="fullName")
     email: str
-    isActive: bool
-    createdAt: datetime
+    is_active: bool = Field(..., serialization_alias="isActive")
+    created_at: datetime = Field(..., serialization_alias="createdAt")
+
+    model_config = {"populate_by_name": True}

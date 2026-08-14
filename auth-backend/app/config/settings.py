@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Optional
 
-from pydantic import AnyUrl, EmailStr, Field, field_validator, model_validator
+from pydantic import EmailStr, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -70,7 +69,9 @@ class Settings(BaseSettings):
     SMTP_PORT: int = Field(default=587, gt=0, le=65535, description="SMTP server port")
     SMTP_USERNAME: str = Field(..., description="SMTP authentication username")
     SMTP_PASSWORD: str = Field(..., description="SMTP authentication password")
-    SMTP_FROM_EMAIL: EmailStr = Field(..., description="Sender address for outgoing mail")
+    SMTP_FROM_EMAIL: EmailStr = Field(
+        ..., description="Sender address for outgoing mail"
+    )
     SMTP_FROM_NAME: str = Field(default="Auth Service", description="Sender display name")
     SMTP_TLS: bool = Field(default=True, description="Use STARTTLS when connecting to SMTP")
 
@@ -127,7 +128,7 @@ class Settings(BaseSettings):
         return v
 
     @model_validator(mode="after")
-    def refresh_ttl_ordering(self) -> "Settings":
+    def refresh_ttl_ordering(self) -> Settings:
         if self.REFRESH_TOKEN_TTL_DAYS_REMEMBER_ME < self.REFRESH_TOKEN_TTL_DAYS:
             raise ValueError(
                 "REFRESH_TOKEN_TTL_DAYS_REMEMBER_ME must be >= REFRESH_TOKEN_TTL_DAYS"

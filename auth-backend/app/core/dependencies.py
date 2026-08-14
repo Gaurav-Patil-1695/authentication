@@ -24,7 +24,13 @@ async def get_current_user(
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={"error": {"code": "UNAUTHORIZED", "message": "Could not validate credentials.", "details": None}},
+        detail={
+            "error": {
+                "code": "UNAUTHORIZED",
+                "message": "Could not validate credentials.",
+                "details": None,
+            }
+        },
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -49,7 +55,13 @@ async def get_current_user(
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"error": {"code": "INACTIVE_USER", "message": "User account is inactive.", "details": None}},
+            detail={
+                "error": {
+                    "code": "INACTIVE_USER",
+                    "message": "User account is inactive.",
+                    "details": None,
+                }
+            },
             headers={"WWW-Authenticate": "Bearer"},
         )
 

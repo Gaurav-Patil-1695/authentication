@@ -71,7 +71,7 @@ async def refresh(
     status_code=status.HTTP_202_ACCEPTED,
     operation_id="forgotPassword",
 )
-async def forgotPassword(
+async def forgot_password(
     body: ForgotPasswordRequest,
     service: AuthService = Depends(get_auth_service),
 ) -> ForgotPasswordResponse:
@@ -84,7 +84,7 @@ async def forgotPassword(
     status_code=status.HTTP_200_OK,
     operation_id="resetPassword",
 )
-async def resetPassword(
+async def reset_password(
     body: ResetPasswordRequest,
     service: AuthService = Depends(get_auth_service),
 ) -> ResetPasswordResponse:

@@ -26,7 +26,7 @@ function PasswordField({
   error,
   hint,
   required = false,
-}: PasswordFieldProps): JSX.Element {
+}: PasswordFieldProps): React.ReactElement {
   const [visible, setVisible] = useState(false);
 
   const errorId = `${id}-error`;

@@ -28,7 +28,7 @@ function TextField({
   error,
   hint,
   required = false,
-}: TextFieldProps): JSX.Element {
+}: TextFieldProps): React.ReactElement {
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
 

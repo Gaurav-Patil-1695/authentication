@@ -10,7 +10,7 @@ function SubmitButton({
   label,
   isLoading = false,
   disabled = false,
-}: SubmitButtonProps): JSX.Element {
+}: SubmitButtonProps): React.ReactElement {
   const isDisabled = disabled || isLoading;
 
   return (

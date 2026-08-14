@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Optional
+from typing import Any
 
 
 # ---------------------------------------------------------------------------
@@ -40,6 +40,13 @@ def _has_number(password: str) -> bool:
 # Validation error collection helpers
 # ---------------------------------------------------------------------------
 
+PASSWORD_RULES = [
+    (_has_min_length, "Password must be at least 8 characters."),
+    (_has_uppercase, "Password must contain at least one uppercase letter."),
+    (_has_lowercase, "Password must contain at least one lowercase letter."),
+    (_has_number, "Password must contain at least one number."),
+]
+
 
 class ValidationError(Exception):
     """Raised when one or more field validations fail."""
@@ -54,7 +61,7 @@ class ValidationError(Exception):
 # ---------------------------------------------------------------------------
 
 
-def validate_full_name(full_name: Optional[str]) -> list[str]:
+def validate_full_name(full_name: str | None) -> list[str]:
     """Return a list of error messages for the full_name field."""
     errors: list[str] = []
     if not full_name or not full_name.strip():
@@ -67,7 +74,7 @@ def validate_full_name(full_name: Optional[str]) -> list[str]:
     return errors
 
 
-def validate_email(email: Optional[str]) -> list[str]:
+def validate_email(email: str | None) -> list[str]:
     """Return a list of error messages for the email field."""
     errors: list[str] = []
     if not email or not email.strip():
@@ -82,7 +89,7 @@ def validate_email(email: Optional[str]) -> list[str]:
     return errors
 
 
-def validate_password(password: Optional[str]) -> list[str]:
+def validate_password(password: str | None) -> list[str]:
     """
     Validate the password against the active policy rules.
     Rules are checked in the order defined in validation-rules.md;
@@ -105,7 +112,7 @@ def validate_password(password: Optional[str]) -> list[str]:
 
 
 def validate_confirm_password(
-    password: Optional[str], confirm_password: Optional[str]
+    password: str | None, confirm_password: str | None
 ) -> list[str]:
     """Return a list of error messages for the confirm_password field."""
     errors: list[str] = []
@@ -117,7 +124,7 @@ def validate_confirm_password(
     return errors
 
 
-def validate_terms_accepted(terms_accepted: Optional[bool]) -> list[str]:
+def validate_terms_accepted(terms_accepted: bool | None) -> list[str]:
     """Return a list of error messages for the terms_accepted field."""
     errors: list[str] = []
     if not terms_accepted:
@@ -132,11 +139,11 @@ def validate_terms_accepted(terms_accepted: Optional[bool]) -> list[str]:
 
 def validate_register_payload(
     *,
-    full_name: Optional[str],
-    email: Optional[str],
-    password: Optional[str],
-    confirm_password: Optional[str],
-    terms_accepted: Optional[bool],
+    full_name: str | None,
+    email: str | None,
+    password: str | None,
+    confirm_password: str | None,
+    terms_accepted: bool | None,
 ) -> dict[str, list[str]]:
     """
     Run all registration field validators and return a mapping of
@@ -169,8 +176,8 @@ def validate_register_payload(
 
 def validate_login_payload(
     *,
-    email: Optional[str],
-    password: Optional[str],
+    email: str | None,
+    password: str | None,
 ) -> dict[str, list[str]]:
     """
     Run field validators for the login payload.
@@ -190,7 +197,7 @@ def validate_login_payload(
 
 def validate_forgot_password_payload(
     *,
-    email: Optional[str],
+    email: str | None,
 ) -> dict[str, list[str]]:
     """Run field validators for the forgot-password payload."""
     result: dict[str, list[str]] = {}
@@ -204,9 +211,9 @@ def validate_forgot_password_payload(
 
 def validate_reset_password_payload(
     *,
-    token: Optional[str],
-    password: Optional[str],
-    confirm_password: Optional[str],
+    token: str | None,
+    password: str | None,
+    confirm_password: str | None,
 ) -> dict[str, list[str]]:
     """Run field validators for the reset-password payload."""
     result: dict[str, list[str]] = {}

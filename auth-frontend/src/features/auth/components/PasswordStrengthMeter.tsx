@@ -29,11 +29,27 @@ const RULES: Rule[] = [
   },
 ];
 
+const STRENGTH_LABELS: Record<number, string> = {
+  0: 'None',
+  1: 'Weak',
+  2: 'Fair',
+  3: 'Good',
+  4: 'Strong',
+};
+
+const STRENGTH_MODIFIERS: Record<number, string> = {
+  0: 'none',
+  1: 'weak',
+  2: 'fair',
+  3: 'good',
+  4: 'strong',
+};
+
 interface PasswordStrengthMeterProps {
   password: string;
 }
 
-function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps): JSX.Element {
+function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps): React.ReactElement {
   const results = RULES.map((rule) => ({
     ...rule,
     passed: rule.test(password),
@@ -42,27 +58,8 @@ function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps): JSX.El
   const passedCount = results.filter((r) => r.passed).length;
   const total = RULES.length;
 
-  const strengthLabel =
-    passedCount === 0
-      ? 'None'
-      : passedCount === 1
-      ? 'Weak'
-      : passedCount === 2
-      ? 'Fair'
-      : passedCount === 3
-      ? 'Good'
-      : 'Strong';
-
-  const strengthModifier =
-    passedCount === 0
-      ? 'none'
-      : passedCount === 1
-      ? 'weak'
-      : passedCount === 2
-      ? 'fair'
-      : passedCount === 3
-      ? 'good'
-      : 'strong';
+  const strengthLabel = STRENGTH_LABELS[passedCount] ?? 'None';
+  const strengthModifier = STRENGTH_MODIFIERS[passedCount] ?? 'none';
 
   return (
     <div className="password-strength" aria-label={`Password strength: ${strengthLabel}`}>

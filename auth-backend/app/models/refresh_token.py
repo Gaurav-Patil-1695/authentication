@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import Optional
+from datetime import datetime, timezone
 
 
 class RefreshToken:
@@ -11,7 +10,7 @@ class RefreshToken:
         user_id: int,
         token_hash: str,
         expires_at: datetime,
-        revoked_at: Optional[datetime],
+        revoked_at: datetime | None,
         remember_me: bool,
         created_at: datetime,
     ) -> None:
@@ -56,7 +55,11 @@ class RefreshToken:
     @property
     def is_expired(self) -> bool:
         """Return True if the token has passed its expiry time."""
-        return datetime.utcnow() >= self.expires_at
+        now = datetime.now(timezone.utc)
+        expires = self.expires_at
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        return now >= expires
 
     def __repr__(self) -> str:
         return (

@@ -1,15 +1,15 @@
-from typing import Any, Optional
+from typing import Any
 
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.common.errors import AppException, ErrorCode
+from app.common.errors import AppError, ErrorCode
 
 
 class ErrorDetail(BaseModel):
     code: str
     message: str
-    details: Optional[Any] = None
+    details: Any | None = None
 
 
 class ErrorEnvelope(BaseModel):
@@ -20,7 +20,7 @@ def error_response(
     code: ErrorCode,
     message: str,
     status_code: int = 400,
-    details: Optional[Any] = None,
+    details: Any | None = None,
 ) -> JSONResponse:
     body = ErrorEnvelope(
         error=ErrorDetail(
@@ -35,7 +35,7 @@ def error_response(
     )
 
 
-def exception_to_response(exc: AppException) -> JSONResponse:
+def exception_to_response(exc: AppError) -> JSONResponse:
     return error_response(
         code=exc.code,
         message=exc.message,

@@ -3,9 +3,8 @@ from __future__ import annotations
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
-from jose import JWTError, jwt
+from jose import jwt
 
 from app.config.settings import settings
 
@@ -35,7 +34,8 @@ def hash_token(raw_token: str) -> str:
 
 
 def generate_opaque_token() -> str:
-    """Return a cryptographically secure URL-safe opaque token (32 bytes -> 64 hex chars)."""
+    """Return a cryptographically secure URL-safe opaque token
+    (32 bytes -> 64 hex chars)."""
     return secrets.token_hex(32)
 
 
@@ -75,7 +75,8 @@ def decode_access_token(token: str) -> dict:
     """Decode and verify a JWT access token.
 
     Raises:
-        jose.JWTError: if the token is invalid, expired, or the signature does not match.
+        jose.JWTError: if the token is invalid, expired, or the signature
+        does not match.
 
     Returns:
         The decoded payload dictionary.
@@ -152,7 +153,7 @@ def is_refresh_token_valid(token_row: dict) -> bool:
     if token_row.get("revoked_at") is not None:
         return False
 
-    expires_at: Optional[datetime] = token_row.get("expires_at")
+    expires_at: datetime | None = token_row.get("expires_at")
     if expires_at is None:
         return False
 
@@ -207,7 +208,7 @@ def is_reset_token_valid(reset_row: dict) -> bool:
     if reset_row.get("used_at") is not None:
         return False
 
-    expires_at: Optional[datetime] = reset_row.get("expires_at")
+    expires_at: datetime | None = reset_row.get("expires_at")
     if expires_at is None:
         return False
 
