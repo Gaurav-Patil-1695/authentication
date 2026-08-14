@@ -1,25 +1,106 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.auth.schemas import (
+    RegisterRequest,
+    RegisterResponse,
     LoginRequest,
     LoginResponse,
-    ErrorResponse,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+    ResetPasswordRequest,
+    ResetPasswordResponse,
+    MeResponse,
+    LogoutResponse,
+    RefreshResponse,
 )
-from app.auth.service import login as login_service
+from app.auth.service import AuthService, get_auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post(
+    "/register",
+    response_model=RegisterResponse,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="register",
+)
+async def register(
+    payload: RegisterRequest,
+    service: AuthService = Depends(get_auth_service),
+) -> RegisterResponse:
+    return await service.register(payload)
+
+
+@router.post(
     "/login",
     response_model=LoginResponse,
-    responses={
-        401: {"model": ErrorResponse},
-        422: {"model": ErrorResponse},
-    },
     status_code=status.HTTP_200_OK,
     operation_id="login",
 )
-async def login(payload: LoginRequest, response: Response) -> LoginResponse:
-    """Authenticate a user with email and password and return access/refresh tokens."""
-    return await login_service(payload=payload, response=response)
+async def login(
+    payload: LoginRequest,
+    service: AuthService = Depends(get_auth_service),
+) -> LoginResponse:
+    return await service.login(payload)
+
+
+@router.post(
+    "/forgot-password",
+    response_model=ForgotPasswordResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    operation_id="forgotPassword",
+)
+async def forgot_password(
+    payload: ForgotPasswordRequest,
+    service: AuthService = Depends(get_auth_service),
+) -> ForgotPasswordResponse:
+    return await service.forgotPassword(payload)
+
+
+@router.post(
+    "/reset-password",
+    response_model=ResetPasswordResponse,
+    status_code=status.HTTP_200_OK,
+    operation_id="resetPassword",
+)
+async def reset_password(
+    payload: ResetPasswordRequest,
+    service: AuthService = Depends(get_auth_service),
+) -> ResetPasswordResponse:
+    return await service.resetPassword(payload)
+
+
+@router.get(
+    "/me",
+    response_model=MeResponse,
+    status_code=status.HTTP_200_OK,
+    operation_id="me",
+)
+async def me(
+    service: AuthService = Depends(get_auth_service),
+) -> MeResponse:
+    return await service.me()
+
+
+@router.post(
+    "/logout",
+    response_model=LogoutResponse,
+    status_code=status.HTTP_200_OK,
+    operation_id="logout",
+)
+async def logout(
+    service: AuthService = Depends(get_auth_service),
+) -> LogoutResponse:
+    return await service.logout()
+
+
+@router.post(
+    "/refresh",
+    response_model=RefreshResponse,
+    status_code=status.HTTP_200_OK,
+    operation_id="refresh",
+)
+async def refresh(
+    service: AuthService = Depends(get_auth_service),
+) -> RefreshResponse:
+    return await service.refresh()

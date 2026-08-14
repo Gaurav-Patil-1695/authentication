@@ -1,32 +1,127 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict
 
 from pydantic import BaseModel, EmailStr, Field
 
 
+# ---------------------------------------------------------------------------
+# Shared inner models
+# ---------------------------------------------------------------------------
+
+
+class UserPayload(BaseModel):
+    id: str
+    fullName: str
+    email: str
+
+
+# ---------------------------------------------------------------------------
+# Register
+# ---------------------------------------------------------------------------
+
+
+class RegisterRequest(BaseModel):
+    full_name: str = Field(..., alias="fullName")
+    email: EmailStr
+    password: str
+    confirm_password: str = Field(..., alias="confirmPassword")
+
+    model_config = {"populate_by_name": True}
+
+
+class RegisterResponse(BaseModel):
+    accessToken: str
+    refreshToken: str
+    user: UserPayload
+
+
+# ---------------------------------------------------------------------------
+# Login
+# ---------------------------------------------------------------------------
+
+
 class LoginRequest(BaseModel):
-    email: EmailStr = Field(..., description="User email address.")
-    password: str = Field(..., min_length=1, description="User password.")
-    remember_me: bool = Field(False, description="Extend refresh token lifetime.")
-
-
-class TokenPair(BaseModel):
-    access_token: str = Field(..., description="Short-lived JWT access token.")
-    token_type: str = Field(..., description="Token type, always 'bearer'.")
+    email: EmailStr
+    password: str
+    rememberMe: bool = False
 
 
 class LoginResponse(BaseModel):
-    tokens: TokenPair
-    user_id: str = Field(..., description="UUID of the authenticated user.")
-    full_name: str = Field(..., description="Full name of the authenticated user.")
-    email: str = Field(..., description="Email address of the authenticated user.")
+    accessToken: str
+    refreshToken: str
+    user: UserPayload
+
+
+# ---------------------------------------------------------------------------
+# Forgot Password
+# ---------------------------------------------------------------------------
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ForgotPasswordResponse(BaseModel):
+    message: str
+
+
+# ---------------------------------------------------------------------------
+# Reset Password
+# ---------------------------------------------------------------------------
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str
+    confirm_password: str = Field(..., alias="confirmPassword")
+
+    model_config = {"populate_by_name": True}
+
+
+class ResetPasswordResponse(BaseModel):
+    message: str
+
+
+# ---------------------------------------------------------------------------
+# Me
+# ---------------------------------------------------------------------------
+
+
+class MeResponse(BaseModel):
+    id: str
+    fullName: str
+    email: str
+
+
+# ---------------------------------------------------------------------------
+# Logout
+# ---------------------------------------------------------------------------
+
+
+class LogoutResponse(BaseModel):
+    message: str
+
+
+# ---------------------------------------------------------------------------
+# Refresh
+# ---------------------------------------------------------------------------
+
+
+class RefreshResponse(BaseModel):
+    accessToken: str
+    refreshToken: str
+
+
+# ---------------------------------------------------------------------------
+# Error envelope (shared)
+# ---------------------------------------------------------------------------
 
 
 class ErrorDetail(BaseModel):
-    code: str = Field(..., description="Machine-readable error code.")
-    message: str = Field(..., description="Human-readable error message.")
-    details: dict[str, Any] | None = Field(None, description="Optional additional error details.")
+    code: str
+    message: str
+    details: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ErrorResponse(BaseModel):
