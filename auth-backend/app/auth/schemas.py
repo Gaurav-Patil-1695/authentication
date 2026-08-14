@@ -1,18 +1,36 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr
+
+
+# ---------------------------------------------------------------------------
+# Login
+# ---------------------------------------------------------------------------
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-    rememberMe: Optional[bool] = None
+    remember_me: Optional[bool] = False
+
+
+class LoginUserInfo(BaseModel):
+    id: str
+    full_name: str
+    email: str
 
 
 class LoginResponse(BaseModel):
-    accessToken: str
-    tokenType: str
-    user: Dict[str, Any]
+    access_token: str
+    token_type: str
+    user: LoginUserInfo
+
+
+# ---------------------------------------------------------------------------
+# Register
+# ---------------------------------------------------------------------------
 
 
 class RegisterRequest(BaseModel):
@@ -24,10 +42,14 @@ class RegisterRequest(BaseModel):
 
 class RegisterResponse(BaseModel):
     id: str
-    fullName: str
+    full_name: str
     email: str
-    isActive: bool
-    createdAt: str
+    created_at: str
+
+
+# ---------------------------------------------------------------------------
+# Forgot Password
+# ---------------------------------------------------------------------------
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -38,47 +60,70 @@ class ForgotPasswordResponse(BaseModel):
     message: str
 
 
+# ---------------------------------------------------------------------------
+# Reset Password
+# ---------------------------------------------------------------------------
+
+
 class ResetPasswordRequest(BaseModel):
     token: str
     password: str
-    confirmPassword: str
+    confirm_password: str
 
 
 class ResetPasswordResponse(BaseModel):
     message: str
 
 
+# ---------------------------------------------------------------------------
+# Me
+# ---------------------------------------------------------------------------
+
+
 class MeResponse(BaseModel):
     id: str
-    fullName: str
+    full_name: str
     email: str
-    isActive: bool
-    createdAt: str
+    created_at: str
+
+
+# ---------------------------------------------------------------------------
+# Logout
+# ---------------------------------------------------------------------------
 
 
 class LogoutRequest(BaseModel):
-    refreshToken: Optional[str] = None
+    refresh_token: Optional[str] = None
 
 
 class LogoutResponse(BaseModel):
     message: str
 
 
+# ---------------------------------------------------------------------------
+# Refresh
+# ---------------------------------------------------------------------------
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: Optional[str] = None
+
+
 class RefreshResponse(BaseModel):
-    accessToken: str
-    tokenType: str
+    access_token: str
+    token_type: str
+
+
+# ---------------------------------------------------------------------------
+# Error envelope
+# ---------------------------------------------------------------------------
 
 
 class ErrorDetail(BaseModel):
-    field: str
-    message: str
-
-
-class ErrorBody(BaseModel):
     code: str
     message: str
-    details: List[ErrorDetail] = []
+    details: dict
 
 
 class ErrorResponse(BaseModel):
-    error: ErrorBody
+    error: ErrorDetail
