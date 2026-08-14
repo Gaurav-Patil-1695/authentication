@@ -1,21 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Response, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.auth.schemas import (
-    RegisterRequest,
-    RegisterResponse,
     LoginRequest,
     LoginResponse,
+    RegisterRequest,
+    RegisterResponse,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     ResetPasswordRequest,
     ResetPasswordResponse,
     MeResponse,
+    LogoutRequest,
     LogoutResponse,
     RefreshResponse,
 )
-from app.auth.service import AuthService, get_auth_service
+from app.auth.service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def get_auth_service() -> AuthService:
+    return AuthService()
 
 
 @router.post(
@@ -25,10 +32,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     operation_id="register",
 )
 async def register(
-    payload: RegisterRequest,
+    body: RegisterRequest,
     service: AuthService = Depends(get_auth_service),
 ) -> RegisterResponse:
-    return await service.register(payload)
+    return await service.register(body)
 
 
 @router.post(
@@ -38,10 +45,11 @@ async def register(
     operation_id="login",
 )
 async def login(
-    payload: LoginRequest,
+    body: LoginRequest,
+    response: Response,
     service: AuthService = Depends(get_auth_service),
 ) -> LoginResponse:
-    return await service.login(payload)
+    return await service.login(body, response)
 
 
 @router.post(
@@ -50,11 +58,11 @@ async def login(
     status_code=status.HTTP_202_ACCEPTED,
     operation_id="forgotPassword",
 )
-async def forgot_password(
-    payload: ForgotPasswordRequest,
+async def forgotPassword(
+    body: ForgotPasswordRequest,
     service: AuthService = Depends(get_auth_service),
 ) -> ForgotPasswordResponse:
-    return await service.forgotPassword(payload)
+    return await service.forgotPassword(body)
 
 
 @router.post(
@@ -63,11 +71,11 @@ async def forgot_password(
     status_code=status.HTTP_200_OK,
     operation_id="resetPassword",
 )
-async def reset_password(
-    payload: ResetPasswordRequest,
+async def resetPassword(
+    body: ResetPasswordRequest,
     service: AuthService = Depends(get_auth_service),
 ) -> ResetPasswordResponse:
-    return await service.resetPassword(payload)
+    return await service.resetPassword(body)
 
 
 @router.get(
@@ -77,9 +85,11 @@ async def reset_password(
     operation_id="me",
 )
 async def me(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     service: AuthService = Depends(get_auth_service),
 ) -> MeResponse:
-    return await service.me()
+    token = credentials.credentials if credentials else None
+    return await service.me(token)
 
 
 @router.post(
@@ -89,9 +99,13 @@ async def me(
     operation_id="logout",
 )
 async def logout(
+    body: LogoutRequest,
+    response: Response,
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     service: AuthService = Depends(get_auth_service),
 ) -> LogoutResponse:
-    return await service.logout()
+    token = credentials.credentials if credentials else None
+    return await service.logout(body, token, response)
 
 
 @router.post(
@@ -101,6 +115,7 @@ async def logout(
     operation_id="refresh",
 )
 async def refresh(
+    response: Response,
     service: AuthService = Depends(get_auth_service),
 ) -> RefreshResponse:
-    return await service.refresh()
+    return await service.refresh(response)

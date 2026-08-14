@@ -1,61 +1,33 @@
-from __future__ import annotations
+from typing import Any, Dict, List, Optional
 
-from typing import Any, Dict
-
-from pydantic import BaseModel, EmailStr, Field
-
-
-# ---------------------------------------------------------------------------
-# Shared inner models
-# ---------------------------------------------------------------------------
-
-
-class UserPayload(BaseModel):
-    id: str
-    fullName: str
-    email: str
-
-
-# ---------------------------------------------------------------------------
-# Register
-# ---------------------------------------------------------------------------
-
-
-class RegisterRequest(BaseModel):
-    full_name: str = Field(..., alias="fullName")
-    email: EmailStr
-    password: str
-    confirm_password: str = Field(..., alias="confirmPassword")
-
-    model_config = {"populate_by_name": True}
-
-
-class RegisterResponse(BaseModel):
-    accessToken: str
-    refreshToken: str
-    user: UserPayload
-
-
-# ---------------------------------------------------------------------------
-# Login
-# ---------------------------------------------------------------------------
+from pydantic import BaseModel, EmailStr
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-    rememberMe: bool = False
+    rememberMe: Optional[bool] = None
 
 
 class LoginResponse(BaseModel):
     accessToken: str
-    refreshToken: str
-    user: UserPayload
+    tokenType: str
+    user: Dict[str, Any]
 
 
-# ---------------------------------------------------------------------------
-# Forgot Password
-# ---------------------------------------------------------------------------
+class RegisterRequest(BaseModel):
+    full_name: str
+    email: EmailStr
+    password: str
+    confirm_password: str
+
+
+class RegisterResponse(BaseModel):
+    id: str
+    fullName: str
+    email: str
+    isActive: bool
+    createdAt: str
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -66,63 +38,47 @@ class ForgotPasswordResponse(BaseModel):
     message: str
 
 
-# ---------------------------------------------------------------------------
-# Reset Password
-# ---------------------------------------------------------------------------
-
-
 class ResetPasswordRequest(BaseModel):
     token: str
     password: str
-    confirm_password: str = Field(..., alias="confirmPassword")
-
-    model_config = {"populate_by_name": True}
+    confirmPassword: str
 
 
 class ResetPasswordResponse(BaseModel):
     message: str
 
 
-# ---------------------------------------------------------------------------
-# Me
-# ---------------------------------------------------------------------------
-
-
 class MeResponse(BaseModel):
     id: str
     fullName: str
     email: str
+    isActive: bool
+    createdAt: str
 
 
-# ---------------------------------------------------------------------------
-# Logout
-# ---------------------------------------------------------------------------
+class LogoutRequest(BaseModel):
+    refreshToken: Optional[str] = None
 
 
 class LogoutResponse(BaseModel):
     message: str
 
 
-# ---------------------------------------------------------------------------
-# Refresh
-# ---------------------------------------------------------------------------
-
-
 class RefreshResponse(BaseModel):
     accessToken: str
-    refreshToken: str
-
-
-# ---------------------------------------------------------------------------
-# Error envelope (shared)
-# ---------------------------------------------------------------------------
+    tokenType: str
 
 
 class ErrorDetail(BaseModel):
+    field: str
+    message: str
+
+
+class ErrorBody(BaseModel):
     code: str
     message: str
-    details: Dict[str, Any] = Field(default_factory=dict)
+    details: List[ErrorDetail] = []
 
 
 class ErrorResponse(BaseModel):
-    error: ErrorDetail
+    error: ErrorBody
