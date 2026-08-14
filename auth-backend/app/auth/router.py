@@ -1,23 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Response, Cookie, status
+from typing import Optional
+
+from app.auth.service import AuthService
 from app.auth.schemas import (
-    LoginRequest,
-    LoginResponse,
     RegisterRequest,
     RegisterResponse,
+    LoginRequest,
+    LoginResponse,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     ResetPasswordRequest,
     ResetPasswordResponse,
     MeResponse,
-    LogoutRequest,
     LogoutResponse,
-    RefreshRequest,
     RefreshResponse,
     ErrorResponse,
 )
-from app.auth.service import AuthService
-from app.core.dependencies import get_auth_service, get_current_user
-from app.models.user import User
+from app.core.dependencies import get_current_user, get_auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -59,7 +58,7 @@ async def forgotPassword(
     body: ForgotPasswordRequest,
     service: AuthService = Depends(get_auth_service),
 ) -> ForgotPasswordResponse:
-    return await service.forgotPassword(body)
+    return await service.forgot_password(body)
 
 
 @router.post(
@@ -72,7 +71,7 @@ async def resetPassword(
     body: ResetPasswordRequest,
     service: AuthService = Depends(get_auth_service),
 ) -> ResetPasswordResponse:
-    return await service.resetPassword(body)
+    return await service.reset_password(body)
 
 
 @router.get(
@@ -82,7 +81,7 @@ async def resetPassword(
     operation_id="me",
 )
 async def me(
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(get_current_user),
 ) -> MeResponse:
     return MeResponse(
         id=current_user.id,
@@ -101,12 +100,11 @@ async def me(
     operation_id="logout",
 )
 async def logout(
-    request: Request,
     response: Response,
+    refresh_token: Optional[str] = Cookie(default=None, alias="refresh_token"),
     service: AuthService = Depends(get_auth_service),
-    current_user: User = Depends(get_current_user),
 ) -> LogoutResponse:
-    return await service.logout(request, response, current_user)
+    return await service.logout(refresh_token=refresh_token, response=response)
 
 
 @router.post(
@@ -116,8 +114,8 @@ async def logout(
     operation_id="refresh",
 )
 async def refresh(
-    request: Request,
     response: Response,
+    refresh_token: Optional[str] = Cookie(default=None, alias="refresh_token"),
     service: AuthService = Depends(get_auth_service),
 ) -> RefreshResponse:
-    return await service.refresh(request, response)
+    return await service.refresh(refresh_token=refresh_token, response=response)

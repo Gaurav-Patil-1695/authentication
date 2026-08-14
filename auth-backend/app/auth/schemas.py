@@ -1,13 +1,7 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
-
-
-# ---------------------------------------------------------------------------
-# Register
-# ---------------------------------------------------------------------------
 
 
 class RegisterRequest(BaseModel):
@@ -18,33 +12,23 @@ class RegisterRequest(BaseModel):
 
 
 class RegisterResponse(BaseModel):
-    id: UUID
+    id: int
     full_name: str
-    email: EmailStr
+    email: str
     is_active: bool
     created_at: datetime
     updated_at: datetime
 
 
-# ---------------------------------------------------------------------------
-# Login
-# ---------------------------------------------------------------------------
-
-
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-    remember_me: Optional[bool] = False
+    remember_me: bool = False
 
 
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str
-
-
-# ---------------------------------------------------------------------------
-# Forgot Password
-# ---------------------------------------------------------------------------
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -53,11 +37,6 @@ class ForgotPasswordRequest(BaseModel):
 
 class ForgotPasswordResponse(BaseModel):
     message: str
-
-
-# ---------------------------------------------------------------------------
-# Reset Password
-# ---------------------------------------------------------------------------
 
 
 class ResetPasswordRequest(BaseModel):
@@ -70,50 +49,22 @@ class ResetPasswordResponse(BaseModel):
     message: str
 
 
-# ---------------------------------------------------------------------------
-# Me
-# ---------------------------------------------------------------------------
-
-
 class MeResponse(BaseModel):
-    id: UUID
+    id: int
     full_name: str
-    email: EmailStr
+    email: str
     is_active: bool
     created_at: datetime
     updated_at: datetime
-
-
-# ---------------------------------------------------------------------------
-# Logout
-# ---------------------------------------------------------------------------
-
-
-class LogoutRequest(BaseModel):
-    pass
 
 
 class LogoutResponse(BaseModel):
     message: str
 
 
-# ---------------------------------------------------------------------------
-# Refresh
-# ---------------------------------------------------------------------------
-
-
-class RefreshRequest(BaseModel):
-    pass
-
-
 class RefreshResponse(BaseModel):
     access_token: str
     token_type: str
-
-
-# ---------------------------------------------------------------------------
-# Error
-# ---------------------------------------------------------------------------
 
 
 class ErrorDetail(BaseModel):
