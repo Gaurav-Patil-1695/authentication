@@ -1,20 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
-
-export interface RegisterRequest {
-  fullName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  acceptTerms: boolean;
-}
-
-export interface RegisterResponse {
-  id: string;
-  fullName: string;
-  email: string;
-  isActive: boolean;
-  createdAt: string;
-}
+const API_BASE = '/api';
 
 export interface LoginRequest {
   email: string;
@@ -24,30 +8,31 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string;
-  tokenType: string;
   user: {
     id: string;
     fullName: string;
     email: string;
-    isActive: boolean;
-    createdAt: string;
   };
 }
 
-export interface MeResponse {
-  id: string;
+export interface RegisterRequest {
   fullName: string;
   email: string;
-  isActive: boolean;
-  createdAt: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface RegisterResponse {
+  accessToken: string;
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
 }
 
 export interface ForgotPasswordRequest {
   email: string;
-}
-
-export interface ForgotPasswordResponse {
-  message: string;
 }
 
 export interface ResetPasswordRequest {
@@ -56,24 +41,24 @@ export interface ResetPasswordRequest {
   confirmPassword: string;
 }
 
-export interface ResetPasswordResponse {
-  message: string;
+export interface MeResponse {
+  id: string;
+  fullName: string;
+  email: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface RefreshResponse {
   accessToken: string;
-  tokenType: string;
-}
-
-export interface LogoutResponse {
-  message: string;
 }
 
 export interface ApiError {
   error: {
     code: string;
     message: string;
-    details?: unknown;
+    details?: Record<string, string[]>;
   };
 }
 
@@ -81,38 +66,27 @@ async function request<T>(
   method: string,
   path: string,
   body?: unknown,
-  signal?: AbortSignal,
+  options?: RequestInit
 ): Promise<T> {
-  const url = `${API_BASE_URL}${path}`;
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  const accessToken = localStorage.getItem('access_token');
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
-  }
-
-  const response = await fetch(url, {
+  const response = await fetch(`${API_BASE}${path}`, {
     method,
-    headers,
+    headers: {
+      'Content-Type': 'application/json',
+    },
     credentials: 'include',
     body: body !== undefined ? JSON.stringify(body) : undefined,
-    signal,
+    ...options,
   });
 
   if (!response.ok) {
-    let data: ApiError | undefined;
+    let errorData: ApiError;
     try {
-      data = (await response.json()) as ApiError;
+      errorData = await response.json();
     } catch {
-      data = undefined;
+      throw new Error(`HTTP error ${response.status}`);
     }
-    const err = Object.assign(new Error(data?.error?.message ?? response.statusText), {
-      response: {
-        status: response.status,
-        data,
-      },
+    const err = Object.assign(new Error(errorData.error?.message ?? 'Unknown error'), {
+      apiError: errorData,
     });
     throw err;
   }
@@ -121,49 +95,33 @@ async function request<T>(
     return undefined as unknown as T;
   }
 
-  return (await response.json()) as T;
+  return response.json() as Promise<T>;
 }
 
-export async function register(payload: RegisterRequest): Promise<RegisterResponse> {
-  return request<RegisterResponse>('POST', '/auth/register', {
-    full_name: payload.fullName,
-    email: payload.email,
-    password: payload.password,
-    confirm_password: payload.confirmPassword,
-    accept_terms: payload.acceptTerms,
-  });
+export async function login(data: LoginRequest): Promise<LoginResponse> {
+  return request<LoginResponse>('POST', '/auth/login', data);
 }
 
-export async function login(payload: LoginRequest): Promise<LoginResponse> {
-  return request<LoginResponse>('POST', '/auth/login', {
-    email: payload.email,
-    password: payload.password,
-    remember_me: payload.rememberMe ?? false,
-  });
+export async function register(data: RegisterRequest): Promise<RegisterResponse> {
+  return request<RegisterResponse>('POST', '/auth/register', data);
 }
 
-export async function me(signal?: AbortSignal): Promise<MeResponse> {
-  return request<MeResponse>('GET', '/auth/me', undefined, signal);
+export async function forgotPassword(data: ForgotPasswordRequest): Promise<void> {
+  return request<void>('POST', '/auth/forgot-password', data);
 }
 
-export async function forgotPassword(payload: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
-  return request<ForgotPasswordResponse>('POST', '/auth/forgot-password', {
-    email: payload.email,
-  });
+export async function resetPassword(data: ResetPasswordRequest): Promise<void> {
+  return request<void>('POST', '/auth/reset-password', data);
 }
 
-export async function resetPassword(payload: ResetPasswordRequest): Promise<ResetPasswordResponse> {
-  return request<ResetPasswordResponse>('POST', '/auth/reset-password', {
-    token: payload.token,
-    password: payload.password,
-    confirm_password: payload.confirmPassword,
-  });
+export async function me(): Promise<MeResponse> {
+  return request<MeResponse>('GET', '/auth/me');
+}
+
+export async function logout(): Promise<void> {
+  return request<void>('POST', '/auth/logout');
 }
 
 export async function refresh(): Promise<RefreshResponse> {
   return request<RefreshResponse>('POST', '/auth/refresh');
-}
-
-export async function logout(): Promise<LogoutResponse> {
-  return request<LogoutResponse>('POST', '/auth/logout');
 }
