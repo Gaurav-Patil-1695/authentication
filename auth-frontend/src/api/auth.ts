@@ -8,11 +8,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string;
-  user: {
-    id: string;
-    fullName: string;
-    email: string;
-  };
+  user: UserProfile;
 }
 
 export interface RegisterRequest {
@@ -24,11 +20,7 @@ export interface RegisterRequest {
 
 export interface RegisterResponse {
   accessToken: string;
-  user: {
-    id: string;
-    fullName: string;
-    email: string;
-  };
+  user: UserProfile;
 }
 
 export interface ForgotPasswordRequest {
@@ -41,7 +33,7 @@ export interface ResetPasswordRequest {
   confirmPassword: string;
 }
 
-export interface MeResponse {
+export interface UserProfile {
   id: string;
   fullName: string;
   email: string;
@@ -54,74 +46,101 @@ export interface RefreshResponse {
   accessToken: string;
 }
 
-export interface ApiError {
-  error: {
-    code: string;
-    message: string;
-    details?: Record<string, string[]>;
-  };
+class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
 }
 
-async function request<T>(
-  method: string,
-  path: string,
-  body?: unknown,
-  options?: RequestInit
-): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    ...options,
-  });
-
-  if (!response.ok) {
-    let errorData: ApiError;
-    try {
-      errorData = await response.json();
-    } catch {
-      throw new Error(`HTTP error ${response.status}`);
+async function handleResponse<T>(res: Response): Promise<T> {
+  if (res.ok) {
+    if (res.status === 204) {
+      return undefined as unknown as T;
     }
-    const err = Object.assign(new Error(errorData.error?.message ?? 'Unknown error'), {
-      apiError: errorData,
-    });
-    throw err;
+    return res.json() as Promise<T>;
   }
 
-  if (response.status === 204) {
-    return undefined as unknown as T;
+  let code = 'UNKNOWN_ERROR';
+  let message = 'Something went wrong. Please try again.';
+
+  try {
+    const body = await res.json();
+    if (body?.error?.message) {
+      message = body.error.message;
+    }
+    if (body?.error?.code) {
+      code = body.error.code;
+    }
+  } catch {
+    // ignore parse errors; fall back to defaults
   }
 
-  return response.json() as Promise<T>;
+  throw new ApiError(message, code, res.status);
 }
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
-  return request<LoginResponse>('POST', '/auth/login', data);
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data),
+  });
+  return handleResponse<LoginResponse>(res);
 }
 
 export async function register(data: RegisterRequest): Promise<RegisterResponse> {
-  return request<RegisterResponse>('POST', '/auth/register', data);
+  const res = await fetch(`${API_BASE}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data),
+  });
+  return handleResponse<RegisterResponse>(res);
 }
 
 export async function forgotPassword(data: ForgotPasswordRequest): Promise<void> {
-  return request<void>('POST', '/auth/forgot-password', data);
+  const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<void>(res);
 }
 
 export async function resetPassword(data: ResetPasswordRequest): Promise<void> {
-  return request<void>('POST', '/auth/reset-password', data);
+  const res = await fetch(`${API_BASE}/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<void>(res);
 }
 
-export async function me(): Promise<MeResponse> {
-  return request<MeResponse>('GET', '/auth/me');
+export async function me(): Promise<UserProfile> {
+  const res = await fetch(`${API_BASE}/auth/me`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  return handleResponse<UserProfile>(res);
 }
 
 export async function logout(): Promise<void> {
-  return request<void>('POST', '/auth/logout');
+  const res = await fetch(`${API_BASE}/auth/logout`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  return handleResponse<void>(res);
 }
 
 export async function refresh(): Promise<RefreshResponse> {
-  return request<RefreshResponse>('POST', '/auth/refresh');
+  const res = await fetch(`${API_BASE}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  return handleResponse<RefreshResponse>(res);
 }
