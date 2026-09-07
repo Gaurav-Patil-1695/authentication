@@ -43,4 +43,9 @@ async def error_response_exception_handler(
     )
 
 
+@app.get("/health", tags=["health"])
+async def health():
+    return {"status": "ok"}
+
+
 app.include_router(auth_router, prefix=f"{API_PREFIX}/auth")
